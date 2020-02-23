@@ -22,13 +22,14 @@ function getBearerHeaders(access_token) {
     }
 }
 
-function TwitchOAuth({ client_id, client_secret, redirect_uri, scopes }, state) {
+function TwitchOAuth({ client_id, client_secret, redirect_uri, force_verify, scopes }, state) {
 
     this.secondsOff = 60;
 
     this.client_id = client_id;
     this.client_secret = client_secret;
     this.redirect_uri = redirect_uri;
+    this.force_verify = force_verify;
     this.scopes = scopes.join(' ');
 
     this.state = state;
@@ -46,6 +47,7 @@ function TwitchOAuth({ client_id, client_secret, redirect_uri, scopes }, state) 
         `redirect_uri=${encodeURIComponent(this.redirect_uri)}`,
         `response_type=code`,
         `scope=${encodeURIComponent(this.scopes)}`,
+        `force_verify=${this.force_verify}`,
         `state=${state}`
     ];
     const urlQuery = urlParams.join('&');
