@@ -112,10 +112,10 @@ TwitchOAuth.prototype.refreshTokenIfNeeded = async function () {
     return Promise.resolve();
 };
 
-TwitchOAuth.prototype.getEndpoint = async function (url) {
+TwitchOAuth.prototype.getEndpoint = async function (url, method) {
     return this.refreshTokenIfNeeded().then(() => {
         return fetch(url, {
-            method: 'GET',
+            method: method || 'GET',
             headers: getBearerHeaders(this.authenticated.access_token)
         }).then(result => result.json()).catch(e => e);
     }).catch(e => e);
