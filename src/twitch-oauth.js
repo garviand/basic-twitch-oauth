@@ -69,7 +69,6 @@ TwitchOAuth.prototype.setAuthenticated = function ({ access_token, refresh_token
     const d = new Date();
     const seconds = Math.round(d.getTime() / 1000);
     this.authenticated.expires_time = (seconds + this.authenticated.expires_in) - this.secondsOff;
-    console.log('Set Expires Time', this.authenticated.expires_time);
 
     return this.authenticated;
 };
@@ -88,7 +87,11 @@ TwitchOAuth.prototype.fetchToken = async function (code) {
     }).then(result => result.json()).then(json => this.setAuthenticated(json)).catch(e => e);
 };
 
-TwitchOAuth.prototype.fetchRefreshToken = async function () {
+TwitchOAuth.prototype.fetchRefreshToken = async function (refresh_token) {
+    let token = refresh_token;
+    if (!token) {
+        token = this.authenticated.refresh_token;
+    }
     return fetch('https://id.twitch.tv/oauth2/token', {
         method: 'POST',
         headers: getBasicHeaders(this.client_id, this.client_secret),
@@ -96,29 +99,28 @@ TwitchOAuth.prototype.fetchRefreshToken = async function () {
             client_id: this.client_id,
             client_secret: this.client_secret,
             grant_type: 'refresh_token',
-            refresh_token: this.authenticated.refresh_token
+            refresh_token: token
         })
     }).then(result => result.json()).then(json => this.setAuthenticated(json)).catch(e => e);
 };
 
-TwitchOAuth.prototype.refreshTokenIfNeeded = async function () {
-    const d = new Date();
-    const seconds = Math.round(d.getTime() / 1000);
-
-    if (seconds > this.authenticated.expires_time) {
-        return this.fetchRefreshToken().catch(e => e);
-    }
-
-    return Promise.resolve();
+TwitchOAuth.prototype.getEndpoint = async function (url, access_token) {
+    console.log(`access_token: ${access_token}`)
+    return fetch(url, {
+        method: 'GET',
+        headers: getBearerHeaders(access_token)
+    }).then(result => {
+        console.log(result)
+        return result.json()
+    }).catch(e => e);
 };
 
-TwitchOAuth.prototype.getEndpoint = async function (url, method) {
-    return this.refreshTokenIfNeeded().then(() => {
-        return fetch(url, {
-            method: method || 'GET',
-            headers: getBearerHeaders(this.authenticated.access_token)
-        }).then(result => result.json()).catch(e => e);
-    }).catch(e => e);
+TwitchOAuth.prototype.postEndpoint = async function (url, body, access_token) {
+    return fetch(url, {
+        method: 'POST',
+        headers: getBearerHeaders(access_token),
+        body: body
+    }).then(result => result.json()).catch(e => e);
 };
 
 module.exports = TwitchOAuth;
